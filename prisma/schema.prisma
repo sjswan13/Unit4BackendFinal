@@ -18,6 +18,7 @@ model User {
   createdAt DateTime  @default(now())
   name      String
   email     String    @unique
+  password  String
   items     Item[]
   reviews   Review[]
   comment   Comment[]
@@ -48,8 +49,8 @@ model Review {
 model Comment {
   id        Int      @id @default(autoincrement())
   text      String
-  user      User     @relation(fields: [userId], references: [id])
   userId    Int
+  user      User     @relation(fields: [userId], references: [id])
   item      Item     @relation(fields: [itemId], references: [id])
   itemId    Int
   createdAt DateTime @default(now())
