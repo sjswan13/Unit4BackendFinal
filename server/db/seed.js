@@ -1,15 +1,20 @@
 const { PrismaClient } = require('@prisma/client');
 const faker = require('faker');
 const prisma = new PrismaClient();
+const bcrypt = require('bcrypt');
+
+const SALT_ROUNDS = 10;
 
 async function seedUsers(numberOfUsers) {
   const users = [];
   for(let i = 0; i< numberOfUsers; i++) {
+    const hashedPassword = await bcrypt.hash(faker.internet.password(), SALT_ROUNDS);
+
     const user = await prisma.user.create ({
       data: {
         name: faker.name.findName(),
         email: faker.internet.email(),
-        password: faker.internet.password(),
+        password: hashedPassword,
       },
     });
     users.push(user);
