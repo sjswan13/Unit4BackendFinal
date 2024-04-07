@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('./prismaClient');
+const authenticateToken = require('./authenticateToken');
 
 router.get('/', async(req, res) => {
   try {
@@ -13,13 +14,14 @@ router.get('/', async(req, res) => {
   }
 });
 
-router.post('/reviews', async(req, res)=> {
-  const { userId, itemId, text, rating } = req.body;
+router.post('/reviews', authenticateToken, async(req, res)=> {
+  const { itemId, text, rating } = req.body;
+  const userId = req.userId;
 
   const existingReviewFromUser = await prisma.review.findFirst({
     where: {
       userId: userId,
-      itemId: itemId.id,
+      itemId: itemId,
     },
   });
   if(existingReviewFromUser) {
@@ -29,15 +31,15 @@ router.post('/reviews', async(req, res)=> {
     data: {
       text, 
       rating,
-      userId,
+      userId: userId,
       itemId,
     },
   });
   res.json(review);
 });
 
-router.get('/revioews/mine', async(req, res) => {
-  const { userId } = req.query;
+router.get('/reviews/mine', authenticateToken, async(req, res) => {
+  const userId = req.userId;
 
   const reviews = await prisma.review.findMany({
     where: {
@@ -50,21 +52,28 @@ router.get('/revioews/mine', async(req, res) => {
   res.json(reviews);
 });
 
-router.delete('/reviews/:id', async (req, res) => {
+router.delete('/reviews/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const { userId } = req.body;
+  const userId = req.userId;
   
-  const review = await prisma.review.findUnique(P{ where: {
+  const review = await prisma.review.findUnique({ where: {
     id: parseInt(id),
   }});
   if(!review || review.userId !== userId) {
     return res.status(404).json({error: "Revew not found or you are not authorized to remove."});
   }
+  await prisma.review.delete({
+    where:{
+      id: parseInt(id),
+    },
+  });
+  res.json({ message: "Review successfully removed." })
 });
 
-router.put('/reviews/:id', async (req, res) => {
-  const { id } = req.params, 
-  const { userId, text, rating} = req.body;
+router.put('/reviews/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params; 
+  const { text, rating} = req.body;
+  const userId = req.userId;
 
   const review = await prisma.review.findUnique({
     where: {
@@ -72,15 +81,18 @@ router.put('/reviews/:id', async (req, res) => {
     }
   });
   if(!review || review.userId !== userId) {
-    return res.status(404).json({error: "Review not found or you are not authorized to edit"})
+    return res.status(404).json({error: "Review not found or you are not authorized to edit"});
   }
-    const updateReview = await prisma.review.update({
+  const updatedReview = await prisma.review.update({
       where: {
         id: parseInt(id),
-        data: { text, rating },
-      }
+      },
+      data: { 
+        text, 
+        rating,
+       },
     });
-    res.json(updateReview);
+    res.json(updatedReview);
 })
 
 
