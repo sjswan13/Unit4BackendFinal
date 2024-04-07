@@ -2,7 +2,6 @@ const { PrismaClient } = require('@prisma/client');
 const faker = require('faker');
 const prisma = new PrismaClient();
 
-
 async function seedUsers(numberOfUsers) {
   const users = [];
   for(let i = 0; i< numberOfUsers; i++) {
