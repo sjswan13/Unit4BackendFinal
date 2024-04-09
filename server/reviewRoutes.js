@@ -56,7 +56,8 @@ router.delete('/reviews/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const userId = req.userId;
   
-  const review = await prisma.review.findUnique({ where: {
+  const review = await prisma.review.findUnique({ 
+    where: {
     id: parseInt(id),
   }});
   if(!review || review.userId !== userId) {

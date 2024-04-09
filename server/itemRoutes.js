@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('./prismaClient');
 
-router.get('/', async(req, res) => {
+router.get('/item/:id', async(req, res) => {
   const { id } = req.params;
   try {
     const item = await prisma.item.findUnique({
@@ -10,7 +10,7 @@ router.get('/', async(req, res) => {
       include: {
         reviews: {
           incluse: {
-            iser: true,
+            user: true,
           }
         }
       }
@@ -19,7 +19,8 @@ router.get('/', async(req, res) => {
       return res.status(404).json({ error: 'Item not found.' });
     } 
 
-    const averageRating = item.reviews.reduce((acc, curr) => acc + curr.rating, 0) / item.review.length;
+    const averageRating = item.reviews.length > 0 ?
+    item.reviews.reduce((acc, curr) => acc + curr.rating, 0) / item.review.length : 0;
 
     res.json({...item, averageRating });
   } catch (error) {
@@ -27,8 +28,8 @@ router.get('/', async(req, res) => {
   }
 });
 
-router.get('/', async(req, res) => {
-  const { serach } = req.query;
+router.get('/items/search', async(req, res) => {
+  const { search } = req.query;
   try {
     const queryOptions = search ? {
       where: {
